@@ -1,0 +1,94 @@
+/* modal.css */
+.hidden{
+    display: none;
+}
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5); /* фон-подложка */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+  }
+  .active{
+    display: flex;
+  }
+  .modal-form {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    animation: slideUp 0.3s ease;
+  }
+  
+  .modal-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .modal-form p {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .modal-form input {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .modal-form input:focus {
+    border-color: #5e9cff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(94, 156, 255, 0.2);
+  }
+  
+  .modal-form button {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: #5e9cff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .modal-form button:hover {
+    background-color: #407fd4;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      background-color: rgba(0, 0, 0, 0);
+    }
+    to {
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  }
+  
+  @keyframes slideUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  

@@ -1,0 +1,56 @@
+.clock {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border: 5px solid rgb(65, 64, 64);
+    border-radius: 50%;
+    background: whitesmoke;
+    flex-shrink: 0;
+}
+.hand {
+    transform: rotate(0deg);
+    transform-origin: bottom;
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    background: black;
+    transition: transform 0.3 ease-in-out;
+}
+.hand.hour {
+    width: 6px;
+    height: 40px;
+    background-color: black;
+}
+.hand.minute {
+    width: 4px;
+    height: 60px;
+    background-color: black;
+}
+.hand.second {
+    width: 2px;
+    background-color: black;
+    height: 80px;
+}
+.center-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: black;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.btn-cl{
+    padding: 15px 20px;
+    border:none;
+    font-size: 16px;
+    border-radius: 10px;
+    background-color: chartreuse;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+.btn-cl:hover{
+    background-color: black;
+}

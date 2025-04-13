@@ -1,0 +1,22 @@
+.add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.add-form input{
+    padding: 5px 15px;
+    border: 1px solid darkcyan;
+    border-radius: 5px;
+}
+p{
+    margin: 0;
+}
+.add-form button{
+    padding: 15px 15px;
+    border:none;
+    cursor: pointer;
+    background-color: cadetblue;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px;
+}
