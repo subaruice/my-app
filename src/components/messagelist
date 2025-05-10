@@ -1,0 +1,270 @@
+import React, { useEffect, useRef, useCallback, useState } from "react";
+import FormBrainIcon from "../icons/form-brain.svg?react";
+import SendMessageIcon from "../icons/send-message.svg?react";
+import AiAvatar from "../icons/ai-avatar.svg?react";
+import UserAvatar from "../icons/User-Avatar.svg?react";
+//import { ReactComponent as LogoWithoutText } from './icons/logo-without-text.svg';
+import MicrophoneIcon from "../icons/microphone.svg?react";
+import TextareaAutosize from "react-textarea-autosize";
+import { apiFetch } from "../api";
+import MessagesList from './MessagesList';
+
+interface ChatMessage {
+    sender: "user" | "llm";
+    text: string;
+}
+
+const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+const isMobileDevice = (): boolean => {
+    return /Mobi|Android/i.test(navigator.userAgent);
+};
+
+const initialMessages: ChatMessage[] = [
+    {
+        sender: "llm",
+        text: "Hello! I’m NHIC’s AI Financial Assistant, here to help you analyze invoice data and uncover key business insights.",
+    },
+    {
+        sender: "llm",
+        text: "I specialize in identifying late payments, spotting customer payment patterns, and flagging transaction delays.",
+    },
+    {
+        sender: "llm",
+        text: 'You can see me in action by exploring our <a href="/data" target="_blank" class="text-blue-500 underline">sample cash flow data</a>.',
+    },
+    {
+        sender: "llm",
+        text: 'Interested in a similar AI assistant for your business? NHIC can easily set up a custom version for you — just <a href="https://newhealthitconsulting.com/contact" target="_blank" class="text-blue-500 underline">contact us</a> to get started.',
+    },
+    {
+        sender: "llm",
+        text: "What would you like to explore today?",
+    },
+];
+
+const quickQuestions = [
+    "Show driver on the map? Show driver on the map? Show driver on the map?",
+    "Push notiifications needed?",
+    "Can the user cancel delivery?",
+];
+
+const ChatWindow: React.FC = () => {
+    //const { instance, accounts } = useMsal();
+
+    const [userMessage, setUserMessage] = useState<string>("");
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [listening, setListening] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const chatEndRef = useRef<HTMLDivElement>(null);
+    const hasInitialized = useRef(false);
+
+    const scrollToBottom = () => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        if (hasInitialized.current) return;
+        hasInitialized.current = true;
+
+        let delay = 500;
+        initialMessages.forEach((msg) => {
+            setTimeout(() => {
+                setMessages((prev) => [...prev, msg]);
+            }, delay);
+            delay += 2000;
+        });
+    }, []);
+
+    useEffect(() => {
+        setTimeout(() => {
+            scrollToBottom();
+        }, 100);
+    }, [messages]);
+
+    const handleMessageSend = async (e: React.FormEvent, msg: string) => {
+        e.preventDefault();
+
+        if (!msg.trim()) {
+            return;
+        }
+
+        // Add the user message to the chat
+        const newMessage: ChatMessage = { sender: "user", text: msg };
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+        setUserMessage("");
+        setLoading(true);
+
+        try {
+            // Check if user is logged in and acquire token
+            //if (accounts.length === 0) {
+            //  throw new Error('User is not logged in');
+            //}
+
+            // Get token silently
+            /*const account = accounts[0];
+      const tokenResponse = await instance.acquireTokenSilent({
+        ...loginRequest,
+        account,
+      });
+
+      const token = tokenResponse.accessToken; // Azure AD token*/
+            const token = "";
+
+            const response = await apiFetch("/api/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    message: userMessage,
+                    history: messages,
+                }),
+            });
+
+            if (response.status === 401) {
+                alert(
+                    "Your session has expired or you are not authorized. Please reload the page to log in again."
+                );
+                window.location.reload();
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error("Something went wrong"); // Handle non-2xx responses
+            }
+
+            const data = await response.text();
+            setLoading(false);
+
+            const llmMessage: ChatMessage = { sender: "llm", text: data };
+            setMessages((prevMessages) => [...prevMessages, llmMessage]);
+        } catch (error: any) {
+            setLoading(false); // Set loading to false in case of error
+            alert(error.message);
+            console.error("Error:", error); // Log the error to the console
+        }
+    };
+
+    const handleSpeechToText = () => {
+        if (!recognition) {
+            alert("Speech recognition is not supported in this browser.");
+            return;
+        }
+
+        if (listening) {
+            // If currently listening, stop the recognition
+            recognition.stop();
+            setListening(false);
+        } else {
+            // If not listening, start the recognition
+            recognition.start();
+            setListening(true);
+        }
+
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            setUserMessage(transcript);
+            setListening(false);
+        };
+
+        recognition.onerror = () => {
+            setListening(false);
+        };
+
+        recognition.onend = () => {
+            setListening(false);
+        };
+    };
+
+    const handleKeyDown = useCallback((
+        e: React.KeyboardEvent<HTMLTextAreaElement>,
+        msg: string
+    ) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault(); // Prevents adding a new line
+            handleMessageSend(e as unknown as React.FormEvent, msg); // Triggers message send
+        }
+    }, [userMessage]);
+
+
+    return (
+        <div className="flex flex-col justify-between h-dvh z-10 relative">
+            {/* <header className="mx-auto w-full bg-white shadow-t-lg rounded-t-lg p-4 flex items-center justify-center border-b border-gray-300">
+                <Logo className="w-32" />
+            </header> */}
+            <div className="relative overflow-auto">
+                {/* Transparency effect */}
+                <div className="pointer-events-none inset-0 absolute h-full w-[100vw] bg-[linear-gradient(0deg,rgba(243,247,251,1)_0%,rgba(243,247,251,0)_15%,rgba(243,247,251,0)_100%)]  z-10" />
+
+                <div className="max-w-[1128px]  mx-auto w-full gap-6 shadow-b-lg rounded-b-lg p-6 pb-0 flex flex-col overflow-auto h-full  relative">
+                    <div className="fixed h-full inset-0 bg-[#F3F7FB] z-0 pointer-events-none"></div>
+                    <MessagesList chatEndRef={chatEndRef} loading={loading} messages={messages} />
+                </div>
+            </div>
+
+            <form
+                className="p-4  pt-0 z-10 flex flex-col gap-3"
+                onSubmit={(e) => handleMessageSend(e, userMessage)}
+            >
+                {/* Quick questions */}
+                <div className="self-center  z-0  flex flex-col w-full max-w-[646px] gap-1 ">
+                    <div className="flex flex-col  gap-1 justify-start whitespace-nowrap">
+                        <p className="text-[12px] leading-[1.7] font-medium text-[#405696]">
+                            Example questions:
+                        </p>
+                        <div className="flex flex-wrap gap-2 overflow-auto">
+                            {quickQuestions.map((message, index) => (
+                                <div
+                                    onClick={(e) =>
+                                        handleMessageSend(e, message)
+                                    }
+                                    key={index}
+                                    className="quick-message cursor-pointer hover:border-black"
+                                >
+                                    {message}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                <div className="relative bg-white max-h-14 box-border p-2 pl-3 border border-[#EDEDFD] shadow-[0px_16px_40px_0px_rgba(112,144,176,0.2)]  z-10 rounded-xl max-w-[646px] items-center mx-auto w-full flex gap-2">
+                    <FormBrainIcon />
+                    <TextareaAutosize
+                        minRows={1}
+                        maxRows={8}
+                        value={userMessage}
+                        onKeyDown={(e) => handleKeyDown(e, userMessage)} // Handling Enter and Shift+Enter
+                        onChange={(e) => setUserMessage(e.target.value)}
+                        placeholder="What's in your mind?..."
+                        className="placeholder:text-sm placeholder:leading-[1.4] placeholder: leading-[1.4] text-sm text-slate-500  overflow-hidden grow py-[10px] outline-none transition duration-300 resize-none "
+                    />
+
+                    {/* Input */}
+                    {!isMobileDevice() && (
+                        <button
+                            type="button"
+                            onClick={handleSpeechToText}
+                            className={`w-10 h-10 flex items-center bg-paleblue text-primary p-2 rounded-lg ${
+                                listening ? "animate-pulse" : ""
+                            }`}
+                            title="Convert speech to text"
+                        >
+                            <MicrophoneIcon className="w-6 h-6" />
+                        </button>
+                    )}
+                    <button type="submit" className="hover:bg-opacity-80 ">
+                        <SendMessageIcon />
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+export default ChatWindow;
